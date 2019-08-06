@@ -43,10 +43,51 @@ public class TestEntity {
 
     }
 
+    @Entity(name = "my_second_entity")
+    class MySecondEntity {
+
+        @PrimaryKey
+        @Column
+        private final String column1;
+
+        @PrimaryKey
+        @Column
+        private final String column2;
+
+        @PrimaryKey
+        @Column
+        private final String column3;
+
+        public MySecondEntity(String column1, String column2, String column3) {
+            this.column1 = column1;
+            this.column2 = column2;
+            this.column3 = column3;
+        }
+
+        public String getColumn1() {
+            return column1;
+        }
+
+        public String getColumn2() {
+            return column2;
+        }
+
+        public String getColumn3() {
+            return column3;
+        }
+    }
+
     @Test
     public void myFirstEntityTest() {
         String expectedDDl = "CREATE TABLE my_first_entity (col_1 VARCHAR(45), col_2 VARCHAR(100) NOT NULL, column3 VARCHAR(45) UNIQUE, PRIMARY KEY (col_1));";
         EntityType et = new EntityType(MyFirstEntity.class);
+        assertEquals(et.generateDDL(), expectedDDl);
+    }
+
+    @Test
+    public void mySecondEntityTest() {
+        String expectedDDl = "CREATE TABLE my_second_entity (column1 VARCHAR(45), column2 VARCHAR(45), column3 VARCHAR(45), PRIMARY KEY (column1, column2, column3));";
+        EntityType et = new EntityType(MySecondEntity.class);
         assertEquals(et.generateDDL(), expectedDDl);
     }
 
