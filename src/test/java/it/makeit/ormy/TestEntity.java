@@ -13,17 +13,16 @@ public class TestEntity {
     @Entity(name = "my_first_entity")
     class MyFirstEntity {
 
-        @PrimaryKey
-        @Column(name = "col_1")
+        @PrimaryKey(column = @Column(name = "col_1"))
         private final String column1;
 
         @Column(name = "col_2", mandatory = true, length = 100)
-        private final String column2;
+        private final byte[] column2;
 
         @Column(unique = true)
         private final String column3;
 
-        public MyFirstEntity(String column1, String column2, String column3) {
+        public MyFirstEntity(String column1, byte[] column2, String column3) {
             this.column1 = column1;
             this.column2 = column2;
             this.column3 = column3;
@@ -33,7 +32,7 @@ public class TestEntity {
             return column1;
         }
 
-        public String getColumn2() {
+        public byte[] getColumn2() {
             return column2;
         }
 
@@ -47,15 +46,12 @@ public class TestEntity {
     class MySecondEntity {
 
         @PrimaryKey
-        @Column
         private final String column1;
 
         @PrimaryKey
-        @Column
         private final String column2;
 
         @PrimaryKey
-        @Column
         private final String column3;
 
         public MySecondEntity(String column1, String column2, String column3) {
@@ -79,16 +75,16 @@ public class TestEntity {
 
     @Test
     public void myFirstEntityTest() {
-        String expectedDDl = "CREATE TABLE my_first_entity (col_1 VARCHAR(45), col_2 VARCHAR(100) NOT NULL, column3 VARCHAR(45) UNIQUE, PRIMARY KEY (col_1));";
+        String expectedDDl = "CREATE TABLE my_first_entity (col_1 VARCHAR(45), col_2 LONGBLOB NOT NULL, column3 VARCHAR(45) UNIQUE, PRIMARY KEY (col_1));";
         EntityType et = new EntityType(MyFirstEntity.class);
-        assertEquals(et.generateDDL(), expectedDDl);
+        assertEquals(expectedDDl, et.generateDDL());
     }
 
     @Test
     public void mySecondEntityTest() {
         String expectedDDl = "CREATE TABLE my_second_entity (column1 VARCHAR(45), column2 VARCHAR(45), column3 VARCHAR(45), PRIMARY KEY (column1, column2, column3));";
         EntityType et = new EntityType(MySecondEntity.class);
-        assertEquals(et.generateDDL(), expectedDDl);
+        assertEquals(expectedDDl, et.generateDDL());
     }
 
 
