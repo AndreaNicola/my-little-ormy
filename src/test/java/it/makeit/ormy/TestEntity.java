@@ -4,9 +4,8 @@ import it.makeit.ormy.annotation.Column;
 import it.makeit.ormy.annotation.Entity;
 import it.makeit.ormy.annotation.PrimaryKey;
 import it.makeit.ormy.model.EntityType;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class TestEntity {
 
@@ -73,18 +72,44 @@ public class TestEntity {
         }
     }
 
+    @Entity
+    class NoPkEntity{
+
+        @Column
+        private String col1;
+
+        @Column
+        private String col2;
+
+    }
+
+    @Entity
+    class EmptyEntity{
+
+    }
+
     @Test
     public void myFirstEntityTest() {
         String expectedDDl = "CREATE TABLE my_first_entity (col_1 VARCHAR(45), col_2 LONGBLOB NOT NULL, column3 VARCHAR(45) UNIQUE, PRIMARY KEY (col_1));";
         EntityType et = new EntityType(MyFirstEntity.class);
-        assertEquals(expectedDDl, et.generateDDL());
+        Assertions.assertEquals(expectedDDl, et.generateDDL());
     }
 
     @Test
     public void mySecondEntityTest() {
         String expectedDDl = "CREATE TABLE my_second_entity (column1 VARCHAR(45), column2 VARCHAR(45), column3 VARCHAR(45), PRIMARY KEY (column1, column2, column3));";
         EntityType et = new EntityType(MySecondEntity.class);
-        assertEquals(expectedDDl, et.generateDDL());
+        Assertions.assertEquals(expectedDDl, et.generateDDL());
+    }
+
+    @Test
+    public void noPkTest(){
+        Assertions.assertThrows(RuntimeException.class, () -> new EntityType(NoPkEntity.class));
+    }
+
+    @Test
+    public void emptyTest(){
+        Assertions.assertThrows(RuntimeException.class, () -> new EntityType(EmptyEntity.class));
     }
 
 

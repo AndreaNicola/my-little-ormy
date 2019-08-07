@@ -19,68 +19,43 @@ public class EntityType {
 
 	public EntityType(Class clazz) {
 
-		if (!clazz.isAnnotationPresent(Entity.class)) {
-			throw new RuntimeException(clazz.getName() + " is not a managed entity");
-		}
-
 		table = extractTableName(clazz);
 
-
 		Collection<ColumnType> pkColumns = extractPkColumns(clazz);
-        this.primaryKey = new PrimaryKeyType(pkColumns);
-        columns.addAll(pkColumns);
+		this.primaryKey = new PrimaryKeyType(pkColumns);
+		columns.addAll(pkColumns);
+		columns.addAll(extractColumns(clazz));
 
-        Field[] fields = clazz.getDeclaredFields();
-        for (Field f : fields) {
-
-			Column columnAnnotation = f.getAnnotation(Column.class);
+		for (Field f : clazz.getDeclaredFields()) {
 			Relationship relationshipAnnotation = f.getAnnotation(Relationship.class);
-
 			if (relationshipAnnotation != null) {
 
-				boolean isReferencedObjectAnEntity = checkReferencedObjectForEntity(f.getType());
+				String referencedTableName = extractTableName(f.getType());
+				Collection<ColumnType> referencedPkColumns = extractPkColumns(f.getType());
 
-				if (isReferencedObjectAnEntity) {
+				List<ColumnType> fkColumns = referencedPkColumns.stream().map(rpc -> new ColumnType(
+				 f.getName() + "_" + rpc.getColumnName(),
+				 f.getName() + "_" + rpc.getFieldName(),
+				 rpc.getFieldClass(),
+				 rpc.getLength(),
+				 relationshipAnnotation.mandatory(),
+				 false)).collect(Collectors.toList());
+				columns.addAll(fkColumns);
 
-					Collection<ColumnType> referencedPkColumns = extractPkColumns(f.getType());
+				RelationshipType relationshipType = new RelationshipType(
+				 "fk_" + f.getName(),
+				 referencedTableName,
+				 fkColumns,
+				 referencedPkColumns
+				);
 
-					List<ColumnType> fkColumns = referencedPkColumns.stream().map(rpc -> new ColumnType(
-					 f.getName() + "_" + rpc.getColumnName(),
-					 f.getName() + "_" + rpc.getFieldName(),
-					 rpc.getFieldClass(),
-					 rpc.getLength(),
-					 relationshipAnnotation.mandatory(),
-					 false)).collect(Collectors.toList());
-
-					columns.addAll(fkColumns);
-
-					RelationshipType relationshipType = new RelationshipType(
-					 "fk_" + f.getName(),
-					 extractTableName(f.getType()),
-					 fkColumns,
-					 referencedPkColumns,
-					 relationshipAnnotation.mandatory()
-					);
-
-					foreignKeys.add(relationshipType);
-
-				}
+				foreignKeys.add(relationshipType);
 
 			}
-
-			if (columnAnnotation != null) {
-				ColumnType column = prepareColumn(f, columnAnnotation);
-				columns.add(column);
-			}
-
 		}
 
 		if (pkColumns.isEmpty()) {
 			throw new RuntimeException(clazz.getName() + " does not declare a primary key");
-		}
-
-		if (columns.isEmpty()) {
-			throw new RuntimeException(clazz.getName() + " does not declare any column");
 		}
 
 	}
@@ -102,12 +77,22 @@ public class EntityType {
 			throw new RuntimeException("The class is not a managed Entity");
 		}
 
-		return StringUtils.isBlank(entityAnnotation.name()) ? type.getName() : entityAnnotation.name();
+		return StringUtils.isBlank(entityAnnotation.name()) ? type.getSimpleName() : entityAnnotation.name();
 
 	}
 
-	private boolean checkReferencedObjectForEntity(Class<?> type) {
-		return type.getAnnotation(Entity.class) != null;
+	private Collection<ColumnType> extractColumns(Class clazz) {
+		Field[] fields = clazz.getDeclaredFields();
+		Collection<ColumnType> result = new ArrayList<>();
+
+		for (Field f : fields) {
+			Column columnAnnotation = f.getAnnotation(Column.class);
+			if (columnAnnotation != null) {
+				ColumnType column = prepareColumn(f, columnAnnotation);
+				columns.add(column);
+			}
+		}
+		return result;
 	}
 
 	private Collection<ColumnType> extractPkColumns(Class<?> clazz) {
